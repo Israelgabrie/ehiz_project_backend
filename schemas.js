@@ -14,6 +14,10 @@ const UserSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
+  skills: [String],
+  company: { type: String },
+  school: { type: String },
+  phone: { type: String }, // ✅ Added phone number field
 });
 
 // Post Schema

@@ -5,19 +5,19 @@ const express = require("express");
 const friendRouter = express.Router();
 const { Post, User } = require("../schemas");
 
-// ✅ Route to get up to 10 random users
+// ✅ Route to get up to 10 random users (minimal fields)
 friendRouter.get("/randomUsers", async (req, res) => {
   try {
     const users = await User.aggregate([
       { $sample: { size: 10 } },
       {
         $project: {
+          _id: 1,
           name: 1,
           email: 1,
-          profileImage: 1,
-          department: 1,
+          department: 1,   // What the person studied
           currentJob: 1,
-          location: 1,
+          skills: 1,
         },
       },
     ]);
@@ -28,6 +28,7 @@ friendRouter.get("/randomUsers", async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 });
+
 
 // ✅ Route to search users by name (case-insensitive, partial match)
 friendRouter.get("/searchByName", async (req, res) => {

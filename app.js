@@ -9,6 +9,7 @@ const cors = require("cors");
 const postRouter = require("./student/posts.js");
 const path = require("path");
 const friendRouter = require("./friend/friend.js");
+const { profileRouter } = require("./profile/profle.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,6 +31,7 @@ app.use(cookieParser());
 // ✅ Routes
 app.use("/user", userRouter);
 app.use("/post", postRouter);
+app.use("/profile", profileRouter);
 app.use("/friend", friendRouter);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
