@@ -38,6 +38,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 
+
 // ✅ Start server after connecting to DB
 connectDB().then(() => {
   app.listen(PORT, () => {

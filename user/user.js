@@ -3,6 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userRouter = express.Router();
 const { User } = require("../schemas.js");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
 
 // Replace with your secure key (preferably from environment variable)
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
@@ -121,5 +125,76 @@ userRouter.get("/getUser", async (req, res) => {
     res.status(401).json({ message: "Invalid or expired token" });
   }
 });
+
+
+
+// Set up storage for profile images
+const profileImageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, "..", "uploads", "profile");
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueName + path.extname(file.originalname));
+  },
+});
+
+const profileImageUpload = multer({
+  storage: profileImageStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
+
+// ✅ Update profile image route
+userRouter.post("/updateProfileImage", profileImageUpload.single("image"), async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId || !req.file) {
+    return res.status(400).json({ success: false, message: "userId and image file are required" });
+  }
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profileImage: req.file.filename },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully",
+      image: req.file.filename,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating profile image:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+
+// ✅ Logout Route
+userRouter.get("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+
+  res.status(200).json({ success: true, message: "Logged out successfully." });
+});
+
+
 
 module.exports = { userRouter };
